@@ -1,0 +1,140 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Georgia', serif;
+  background: #0A1628;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+/* ─── Onboarding ─── */
+.onboarding {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0A1628 0%, #1a2f4e 100%);
+}
+.onboarding-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 3rem;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+.onboarding-card h1 { font-size: 2.5rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+.tagline { color: #8ab4d4; font-style: italic; margin-bottom: 2rem; font-size: 1.05rem; }
+.field { text-align: left; margin-bottom: 1.25rem; }
+.field label { display: block; font-size: 0.85rem; color: #8ab4d4; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.field select, .field input {
+  width: 100%; padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px; color: #fff; font-size: 1rem;
+  outline: none; transition: border-color 0.2s;
+}
+.field select:focus, .field input:focus { border-color: #4a9eda; }
+.field select option { background: #1a2f4e; }
+.error { color: #ff6b6b; font-size: 0.9rem; margin-bottom: 1rem; }
+.submit-btn {
+  width: 100%; padding: 0.9rem;
+  background: #2E75B6; color: white; border: none;
+  border-radius: 8px; font-size: 1.1rem; cursor: pointer;
+  transition: background 0.2s; margin-top: 0.5rem;
+}
+.submit-btn:hover:not(:disabled) { background: #3a8fd4; }
+.submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Loading ─── */
+.loading {
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; font-size: 1.5rem; color: #8ab4d4;
+  background: #0A1628;
+}
+
+/* ─── Story Layout ─── */
+.story-container {
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+.sticky-graphic {
+  position: sticky;
+  top: 0;
+  width: 55%;
+  height: 100vh;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.scroll-steps {
+  width: 45%;
+  padding: 0 2rem;
+}
+.scroll-step {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 4rem 2rem;
+}
+.step-content {
+  background: rgba(255, 255, 255, 0.97);
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+}
+
+.chapter-number {
+  font-size: 0.75rem;
+  color: #4a9eda;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.5rem;
+}
+.chapter-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+  color: #e8f4fd;
+}
+.chapter-body {
+  color: #b8d4ea;
+  line-height: 1.8;
+  font-size: 1rem;
+}
+.birth-year-badge {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.4rem 1rem;
+  background: #2E75B6;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: white;
+}
+
+/* ─── Map overlay ─── */
+.map-overlay-label {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* ─── Ken Burns ─── */
+@keyframes kenBurns {
+  0%   { transform: scale(1.00) translate(0px, 0px); }
+  50%  { transform: scale(1.05) translate(-8px, -4px); }
+  100% { transform: scale(1.08) translate(-12px, -8px); }
+}
+.map-animating .leaflet-tile-pane {
+  animation: kenBurns 10s ease-in-out forwards;
+}

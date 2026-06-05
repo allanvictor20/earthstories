@@ -1,0 +1,20 @@
+# Python virtual environment
+earthstories-env/
+
+# Node modules
+earthstories-frontend/node_modules/
+
+# API keys - never push these
+earthstories-frontend/.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vite build output
+earthstories-frontend/dist/

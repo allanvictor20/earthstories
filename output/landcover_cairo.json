@@ -1,0 +1,140 @@
+{
+  "2001": {
+    "urban_pct": 27.07,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 2.92
+  },
+  "2002": {
+    "urban_pct": 27.09,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.06
+  },
+  "2003": {
+    "urban_pct": 27.13,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.05
+  },
+  "2004": {
+    "urban_pct": 27.13,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.05
+  },
+  "2005": {
+    "urban_pct": 27.15,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.03
+  },
+  "2006": {
+    "urban_pct": 27.19,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.09
+  },
+  "2007": {
+    "urban_pct": 27.24,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.23
+  },
+  "2008": {
+    "urban_pct": 27.35,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.2
+  },
+  "2009": {
+    "urban_pct": 27.48,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.3
+  },
+  "2010": {
+    "urban_pct": 27.78,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.53
+  },
+  "2011": {
+    "urban_pct": 28.1,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.59
+  },
+  "2012": {
+    "urban_pct": 28.32,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.69
+  },
+  "2013": {
+    "urban_pct": 28.47,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.82
+  },
+  "2014": {
+    "urban_pct": 28.64,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.89
+  },
+  "2015": {
+    "urban_pct": 28.84,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 4.09
+  },
+  "2016": {
+    "urban_pct": 29.19,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.93
+  },
+  "2017": {
+    "urban_pct": 29.54,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.81
+  },
+  "2018": {
+    "urban_pct": 29.9,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.72
+  },
+  "2019": {
+    "urban_pct": 30.24,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.57
+  },
+  "2020": {
+    "urban_pct": 30.4,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.37
+  },
+  "2021": {
+    "urban_pct": 30.75,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.38
+  },
+  "2022": {
+    "urban_pct": 31.07,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.56
+  },
+  "2023": {
+    "urban_pct": 31.37,
+    "forest_pct": 0.0,
+    "water_pct": 0.4,
+    "grassland_pct": 3.81
+  }
+}

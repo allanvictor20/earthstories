@@ -1,0 +1,98 @@
+{
+  "2001": {
+    "mean_celsius": 27.77,
+    "anomaly_celsius": -0.14
+  },
+  "2002": {
+    "mean_celsius": 28.49,
+    "anomaly_celsius": 0.58
+  },
+  "2003": {
+    "mean_celsius": 28.48,
+    "anomaly_celsius": 0.56
+  },
+  "2004": {
+    "mean_celsius": 27.69,
+    "anomaly_celsius": -0.22
+  },
+  "2005": {
+    "mean_celsius": 27.62,
+    "anomaly_celsius": -0.29
+  },
+  "2006": {
+    "mean_celsius": 27.21,
+    "anomaly_celsius": -0.7
+  },
+  "2007": {
+    "mean_celsius": 28.05,
+    "anomaly_celsius": 0.14
+  },
+  "2008": {
+    "mean_celsius": 28.55,
+    "anomaly_celsius": 0.64
+  },
+  "2009": {
+    "mean_celsius": 28.92,
+    "anomaly_celsius": 1.01
+  },
+  "2010": {
+    "mean_celsius": 26.47,
+    "anomaly_celsius": -1.44
+  },
+  "2011": {
+    "mean_celsius": 28.28,
+    "anomaly_celsius": 0.37
+  },
+  "2012": {
+    "mean_celsius": 28.95,
+    "anomaly_celsius": 1.04
+  },
+  "2013": {
+    "mean_celsius": 27.71,
+    "anomaly_celsius": -0.2
+  },
+  "2014": {
+    "mean_celsius": 27.92,
+    "anomaly_celsius": 0.01
+  },
+  "2015": {
+    "mean_celsius": 29.35,
+    "anomaly_celsius": 1.44
+  },
+  "2016": {
+    "mean_celsius": 27.63,
+    "anomaly_celsius": -0.28
+  },
+  "2017": {
+    "mean_celsius": 28.47,
+    "anomaly_celsius": 0.56
+  },
+  "2018": {
+    "mean_celsius": 27.5,
+    "anomaly_celsius": -0.42
+  },
+  "2019": {
+    "mean_celsius": 27.91,
+    "anomaly_celsius": -0.0
+  },
+  "2020": {
+    "mean_celsius": 27.75,
+    "anomaly_celsius": -0.17
+  },
+  "2021": {
+    "mean_celsius": 28.79,
+    "anomaly_celsius": 0.88
+  },
+  "2022": {
+    "mean_celsius": 28.02,
+    "anomaly_celsius": 0.1
+  },
+  "2023": {
+    "mean_celsius": 25.43,
+    "anomaly_celsius": -2.49
+  },
+  "2024": {
+    "mean_celsius": 25.01,
+    "anomaly_celsius": -2.9
+  }
+}
