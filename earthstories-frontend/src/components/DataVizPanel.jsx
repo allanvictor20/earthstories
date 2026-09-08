@@ -74,6 +74,7 @@ function NdviChart({ cityData, birthYear }) {
           />
           <YAxis
             domain={domain}
+            tickFormatter={(v) => v.toFixed(2)}
             tick={{ fontSize: 10, fill: '#7a9090' }}
             tickLine={false}
             axisLine={false}
