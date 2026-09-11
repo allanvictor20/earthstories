@@ -22,10 +22,10 @@ export default function App() {
 
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-    for (let ch = 1; ch <= 5; ch++) {
-      setLoadingMsg(`Writing chapter ${ch} of 5...`);
+    for (let ch = 1; ch <= 6; ch++) {
+      setLoadingMsg(`Writing chapter ${ch} of 6...`);
       results[ch] = await generateNarration(ch, profile, birthYear, apiKey);
-      if (ch < 5) await delay(1000); // wait 10 seconds between chapters
+      if (ch < 6) await delay(1000);
     }
 
     setNarrations(results);

@@ -3,8 +3,6 @@
 // Drop into: earthstories-frontend/src/components/DataVizPanel.jsx
 
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,6 +12,68 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
+
+function seriesFor(cityData, metric) {
+  return Object.entries(cityData.metrics?.[metric] || {})
+    .map(([year, value]) => ({ year: Number(year), value: Number(value) }))
+    .filter(point => Number.isFinite(point.year) && Number.isFinite(point.value))
+    .sort((a, b) => a.year - b.year);
+}
+
+function nearestValue(series, year) {
+  return series.filter(point => point.year <= year).at(-1) || series[0];
+}
+
+function formatChange(value, unit = '') {
+  if (!Number.isFinite(value)) return 'not enough data';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(1)}${unit}`;
+}
+
+function InsightsPanel({ cityData, birthYear }) {
+  const temperature = seriesFor(cityData, 'temperature_mean');
+  const anomaly = seriesFor(cityData, 'temperature_anomaly');
+  const vegetation = seriesFor(cityData, 'ndvi_mean');
+  const urban = seriesFor(cityData, 'urban_cover_pct');
+  const start = temperature[0]?.year;
+  const end = temperature.at(-1)?.year;
+  const startTemp = nearestValue(temperature, birthYear)?.value;
+  const endTemp = temperature.at(-1)?.value;
+  const warmest = anomaly.reduce((best, point) => point.value > best.value ? point : best, anomaly[0]);
+  const coolest = anomaly.reduce((best, point) => point.value < best.value ? point : best, anomaly[0]);
+  const startGreen = nearestValue(vegetation, birthYear)?.value;
+  const endGreen = vegetation.at(-1)?.value;
+  const startUrban = nearestValue(urban, birthYear)?.value;
+  const endUrban = urban.at(-1)?.value;
+
+  const insights = [
+    { icon: '🌡', title: 'Temperature', text: `${formatChange(endTemp - startTemp, '°C')} in the annual mean between the archive start and latest year.` },
+    { icon: '🔥', title: 'Biggest warm year', text: `${warmest?.year || 'n/a'} was ${warmest?.value >= 0 ? '+' : ''}${warmest?.value?.toFixed(1) || 'n/a'}°C vs the local baseline.` },
+    { icon: '🌿', title: 'Green cover', text: `${formatChange((endGreen - startGreen) * 100, ' percentage points')} in the vegetation signal.` },
+    { icon: '🏙', title: 'Built-up land', text: `${formatChange(endUrban - startUrban, ' percentage points')} in mapped urban cover.` },
+  ];
+
+  return (
+    <div style={styles.chartPanel}>
+      <div style={styles.chartHeader}>
+        <span style={styles.chartIcon}>🔎</span>
+        <div>
+          <p style={styles.chartTitle}>Read the picture in plain language</p>
+          <p style={styles.chartSubtitle}>{cityData.city} · measured {start}–{end}</p>
+        </div>
+      </div>
+      <p style={styles.explainer}>The satellite image shows land and water. These four signals translate what the image and the sensor record mean on the ground.</p>
+      <div style={styles.insightGrid}>
+        {insights.map(insight => (
+          <div key={insight.title} style={styles.insightCard}>
+            <span style={styles.insightIcon}>{insight.icon}</span>
+            <div><strong style={styles.insightTitle}>{insight.title}</strong><p style={styles.insightText}>{insight.text}</p></div>
+          </div>
+        ))}
+      </div>
+      <p style={styles.legend}>Warmest year: {warmest?.year || 'n/a'} · coolest year: {coolest?.year || 'n/a'}. Hover the charts for the exact annual reading.</p>
+    </div>
+  );
+}
 
 // ── Custom Tooltip ────────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }) => {
@@ -110,13 +170,6 @@ function TempChart({ cityData, birthYear }) {
   const tempData = Object.entries(cityData.metrics?.temperature_anomaly || {})
     .map(([year, val]) => ({ year: parseInt(year), anomaly: val ?? 0 }))
     .sort((a, b) => a.year - b.year);
-
-  const getColor = (val) => {
-    if (val > 1.0) return '#e53935';
-    if (val > 0.4) return '#ff7043';
-    if (val > 0)   return '#ffa726';
-    return '#42a5f5';
-  };
 
   return (
     <div style={styles.chartPanel}>
@@ -235,11 +288,13 @@ function EventsTimeline({ cityData, birthYear }) {
 // ── Summary Mini-Charts ───────────────────────────────────────────────────────
 function SummaryPanel({ cityData, birthYear }) {
   const years = Object.keys(cityData.metrics?.ndvi_mean || {}).map(Number).sort();
-  const firstYear = birthYear;
+  const firstYear = years.find(year => year >= birthYear) || years[0];
   const lastYear  = Math.max(...years);
 
-  const getValue = (metric, year) =>
-    cityData.metrics?.[metric]?.[String(year)] ?? null;
+  const getValue = (metric, year) => {
+    const values = seriesFor(cityData, metric);
+    return nearestValue(values, year)?.value ?? null;
+  };
 
   const ndviStart  = getValue('ndvi_mean', firstYear);
   const ndviEnd    = getValue('ndvi_mean', lastYear);
@@ -261,7 +316,7 @@ function SummaryPanel({ cityData, birthYear }) {
       label: 'Temp. Anomaly',
       from: tempStart != null ? `+${tempStart.toFixed(1)}°C` : 'n/a',
       to:   tempEnd   != null ? `+${tempEnd.toFixed(1)}°C`   : 'n/a',
-      delta: tempEnd && tempStart ? `+${(tempEnd - tempStart).toFixed(1)}°C` : 'n/a',
+      delta: tempEnd != null && tempStart != null ? formatChange(tempEnd - tempStart, '°C') : 'n/a',
       positive: !(tempEnd > tempStart),
       icon: '🌡️',
     },
@@ -309,10 +364,11 @@ function SummaryPanel({ cityData, birthYear }) {
 }
 
 // ── Main Export ───────────────────────────────────────────────────────────────
-export default function DataVizPanel({ type, cityData, birthYear, activeYear }) {
+export default function DataVizPanel({ type, cityData, birthYear }) {
   if (!cityData) return null;
 
   switch (type) {
+    case 'insights': return <InsightsPanel cityData={cityData} birthYear={birthYear} />;
     case 'ndvi':    return <NdviChart    cityData={cityData} birthYear={birthYear} />;
     case 'temp':    return <TempChart    cityData={cityData} birthYear={birthYear} />;
     case 'events':  return <EventsTimeline cityData={cityData} birthYear={birthYear} />;
@@ -354,6 +410,12 @@ const styles = {
     fontSize: 11,
     color: '#607d6b',
   },
+  explainer: { margin: '0 0 12px', fontSize: 12, lineHeight: 1.5, color: '#b9cfbf' },
+  insightGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 },
+  insightCard: { display: 'flex', gap: 8, alignItems: 'flex-start', padding: 9, background: 'rgba(255,255,255,0.05)', borderRadius: 8 },
+  insightIcon: { fontSize: 18, lineHeight: 1 },
+  insightTitle: { display: 'block', color: '#d6eed8', fontSize: 11, marginBottom: 3 },
+  insightText: { margin: 0, color: '#a8c0ad', fontSize: 10, lineHeight: 1.4 },
   legend: {
     margin: '8px 0 0',
     fontSize: 10,

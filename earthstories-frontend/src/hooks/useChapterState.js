@@ -5,7 +5,8 @@ export const CHAPTERS = [
   { id: 2, title: 'Growing Up Together',               chartType: 'none',    year_offset: 5  },
   { id: 3, title: 'The Hidden Changes',                chartType: 'ndvi',    year_offset: 10 },
   { id: 4, title: 'Events That Shaped Your Home',      chartType: 'events',  year_offset: 15 },
-  { id: 5, title: 'What Changed While You Were Alive', chartType: 'summary', year_offset: 20 },
+  { id: 5, title: 'Your Story So Far',                  chartType: 'summary', year_offset: 0  },
+  { id: 6, title: 'Your Next Chapter',                  chartType: 'forecast', year_offset: 0  },
 ];
 
 export function useChapterState(birthYear) {
@@ -18,8 +19,7 @@ export function useChapterState(birthYear) {
 
   const onStepEnter = useCallback(({ element }) => {
     const chapter = parseInt(element.dataset.chapter);
-    const offset  = parseInt(element.dataset.yearOffset || 0);
-    const year    = Math.min(birthYear + offset, 2022);
+    const year    = parseInt(element.dataset.year || birthYear);
     setState({
       activeChapter: chapter,
       activeYear:    year,

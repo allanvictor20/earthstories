@@ -18,12 +18,13 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 export function useVoiceNarration() {
   const [isEnabled,   setIsEnabled]   = useState(false);
   const [isSpeaking,  setIsSpeaking]  = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported] = useState(() =>
+    typeof window !== 'undefined' && 'speechSynthesis' in window
+  );
   const utteranceRef = useRef(null);
 
   // Check browser support once on mount
   useEffect(() => {
-    setIsSupported(typeof window !== 'undefined' && 'speechSynthesis' in window);
     return () => {
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     };

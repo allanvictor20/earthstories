@@ -9,8 +9,8 @@ const GIBS_LAYERS = {
   ndvi:    'MODIS_Terra_NDVI_8Day',
 };
 
-const MIN_YEAR = 2001;
-const MAX_YEAR = 2023;
+const MIN_ARCHIVE_YEAR = 2001;
+const MAX_ARCHIVE_YEAR = 2024;
 
 const GIBS_TEMPLATE =
   '//gibs-{s}.earthdata.nasa.gov/wmts/epsg3857/best/' +
@@ -49,7 +49,7 @@ function GIBSTileLayer({ year, chapter }) {
     }
 
     const layerName = chapter === 3 ? GIBS_LAYERS.ndvi : GIBS_LAYERS.default;
-    const clampedYear = Math.max(MIN_YEAR, Math.min(MAX_YEAR, year));
+    const clampedYear = Math.max(MIN_ARCHIVE_YEAR, Math.min(MAX_ARCHIVE_YEAR, year));
 
     const gibs = L.tileLayer(buildGibsUrl(layerName, clampedYear), {
       subdomains:      'abc',
@@ -91,40 +91,38 @@ function GIBSTileLayer({ year, chapter }) {
   return null;
 }
 
-function YearScrubber({ year, birthYear, onYearChange }) {
+function YearScrubber({ year, birthYear, minYear, maxYear, onYearChange }) {
   return (
     <div style={scrubberStyle}>
-      <span style={labelStyle}>{MIN_YEAR}</span>
+      <span style={labelStyle}>{minYear}</span>
 
       <div style={{ flex: 1, position: 'relative' }}>
         <input
           type="range"
-          min={MIN_YEAR}
-          max={MAX_YEAR}
+          min={minYear}
+          max={maxYear}
           value={year}
           onChange={e => onYearChange(parseInt(e.target.value))}
           style={sliderStyle}
         />
         <div style={{
           ...birthMarkerStyle,
-          left: `${((birthYear - MIN_YEAR) / (MAX_YEAR - MIN_YEAR)) * 100}%`,
+          left: `${((birthYear - minYear) / (maxYear - minYear)) * 100}%`,
         }}>
           <div style={birthDotStyle} />
           <span style={birthLabelStyle}>Born</span>
         </div>
       </div>
 
-      <span style={labelStyle}>{MAX_YEAR}</span>
+      <span style={labelStyle}>{maxYear}</span>
     </div>
   );
 }
 
 export default function MapLayer({ year: chapterYear, cityData, chapter, birthYear }) {
   const [scrubYear, setScrubYear] = useState(chapterYear);
-
-  useEffect(() => {
-    setScrubYear(chapterYear);
-  }, [chapterYear]);
+  const minYear = birthYear || MIN_ARCHIVE_YEAR;
+  const maxYear = new Date().getFullYear();
 
   if (!cityData?.lat || !cityData?.lon) return null;
 
@@ -134,7 +132,7 @@ export default function MapLayer({ year: chapterYear, cityData, chapter, birthYe
       <div style={yearBadgeStyle}>{scrubYear}</div>
 
       <div style={chapterBadgeStyle}>
-        {chapter === 3 ? '🌿 NDVI View' : '🛰 True Color'}
+        {chapter === 3 ? '🌿 Vegetation signal' : '🛰 What the city looks like'}
       </div>
 
       <MapContainer
@@ -151,9 +149,16 @@ export default function MapLayer({ year: chapterYear, cityData, chapter, birthYe
       <div style={scrubberContainerStyle}>
         <YearScrubber
           year={scrubYear}
-          birthYear={birthYear || 1998}
+          birthYear={birthYear || minYear}
+          minYear={minYear}
+          maxYear={maxYear}
           onYearChange={setScrubYear}
         />
+        {scrubYear < MIN_ARCHIVE_YEAR || scrubYear > MAX_ARCHIVE_YEAR ? (
+          <p style={archiveNoteStyle}>
+            The image archive covers {MIN_ARCHIVE_YEAR}–{MAX_ARCHIVE_YEAR}. The year badge stays at {scrubYear}; the image uses the nearest available archive scene.
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -248,4 +253,12 @@ const birthLabelStyle = {
   fontWeight:    700,
   marginTop:     2,
   letterSpacing: '0.05em',
+};
+
+const archiveNoteStyle = {
+  margin: '8px 0 0',
+  color: 'rgba(255,255,255,0.72)',
+  fontSize: 10,
+  lineHeight: 1.4,
+  textAlign: 'center',
 };
