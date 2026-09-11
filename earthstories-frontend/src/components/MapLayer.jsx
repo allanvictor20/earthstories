@@ -1,4 +1,3 @@
-// src/components/MapLayer.jsx
 import { useEffect, useRef, useState } from 'react';
 import { MapContainer, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -6,11 +5,12 @@ import 'leaflet/dist/leaflet.css';
 
 const GIBS_LAYERS = {
   default: 'MODIS_Terra_CorrectedReflectance_TrueColor',
-  ndvi:    'MODIS_Terra_NDVI_8Day',
+  ndvi: 'MODIS_Terra_NDVI_8Day',
 };
 
 const MIN_ARCHIVE_YEAR = 2001;
-const MAX_ARCHIVE_YEAR = 2024;
+// The GIBS archive tracks real time; hard-coding an end year silently goes stale.
+const MAX_ARCHIVE_YEAR = new Date().getFullYear();
 
 const GIBS_TEMPLATE =
   '//gibs-{s}.earthdata.nasa.gov/wmts/epsg3857/best/' +
@@ -20,27 +20,24 @@ function buildGibsUrl(layer, year) {
   const isNDVI = layer === GIBS_LAYERS.ndvi;
   return GIBS_TEMPLATE
     .replace('{layer}', layer)
-    .replace('{time}',  `${year}-07-04`)
-    .replace('{ext}',   isNDVI ? 'png' : 'jpg');
+    .replace('{time}', `${year}-07-04`)
+    .replace('{ext}', isNDVI ? 'png' : 'jpg');
 }
 
 function GIBSTileLayer({ year, chapter }) {
-  const map     = useMap();
+  const map = useMap();
   const gibsRef = useRef(null);
   const baseRef = useRef(null);
   const fadeRef = useRef(null);
 
   useEffect(() => {
-    // Clear any running fade interval
     if (fadeRef.current) clearInterval(fadeRef.current);
 
-    // Remove previous GIBS layer
     if (gibsRef.current) {
       map.removeLayer(gibsRef.current);
       gibsRef.current = null;
     }
 
-    // Add OSM base only once
     if (!baseRef.current) {
       baseRef.current = L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -52,28 +49,37 @@ function GIBSTileLayer({ year, chapter }) {
     const clampedYear = Math.max(MIN_ARCHIVE_YEAR, Math.min(MAX_ARCHIVE_YEAR, year));
 
     const gibs = L.tileLayer(buildGibsUrl(layerName, clampedYear), {
-      subdomains:      'abc',
-      maxNativeZoom:   9,
-      maxZoom:         18,
-      tileSize:        256,
-      noWrap:          true,
+      subdomains: 'abc',
+      maxNativeZoom: 9,
+      maxZoom: 18,
+      tileSize: 256,
+      noWrap: true,
       continuousWorld: false,
       bounds: [
         [-85.0511287776, -179.999999975],
-        [ 85.0511287776,  179.999999975],
+        [85.0511287776, 179.999999975],
       ],
-      opacity:    0,  // start invisible
+      opacity: 0,
       attribution:
         '<a href="https://wiki.earthdata.nasa.gov/display/GIBS">NASA EOSDIS GIBS</a>',
     });
 
-    // Fade in once all tiles are loaded
+    // Respect a reduced-motion preference: show the layer immediately rather
+    // than animating a fade.
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
     gibs.on('load', () => {
-      let op = 0;
+      if (prefersReducedMotion) {
+        gibs.setOpacity(0.92);
+        return;
+      }
+      let opacity = 0;
       fadeRef.current = setInterval(() => {
-        op += 0.05;
-        gibs.setOpacity(op);
-        if (op >= 0.92) {
+        opacity += 0.05;
+        gibs.setOpacity(opacity);
+        if (opacity >= 0.92) {
           clearInterval(fadeRef.current);
           fadeRef.current = null;
         }
@@ -92,46 +98,60 @@ function GIBSTileLayer({ year, chapter }) {
 }
 
 function YearScrubber({ year, birthYear, minYear, maxYear, onYearChange }) {
-  return (
-    <div style={scrubberStyle}>
-      <span style={labelStyle}>{minYear}</span>
+  const span = Math.max(1, maxYear - minYear);
 
-      <div style={{ flex: 1, position: 'relative' }}>
+  return (
+    <div className="scrubber">
+      <span className="scrubber__bound">{minYear}</span>
+
+      <div className="scrubber__track">
         <input
+          className="scrubber__input"
           type="range"
           min={minYear}
           max={maxYear}
           value={year}
-          onChange={e => onYearChange(parseInt(e.target.value))}
-          style={sliderStyle}
+          onChange={e => onYearChange(Number.parseInt(e.target.value, 10))}
+          aria-label="Scrub the satellite imagery year"
+          aria-valuetext={`Year ${year}`}
         />
-        <div style={{
-          ...birthMarkerStyle,
-          left: `${((birthYear - minYear) / (maxYear - minYear)) * 100}%`,
-        }}>
-          <div style={birthDotStyle} />
-          <span style={birthLabelStyle}>Born</span>
+        <div
+          className="scrubber__birth"
+          style={{ left: `${((birthYear - minYear) / span) * 100}%` }}
+        >
+          <div className="scrubber__birth-dot" />
+          <span className="scrubber__birth-label">Born</span>
         </div>
       </div>
 
-      <span style={labelStyle}>{maxYear}</span>
+      <span className="scrubber__bound">{maxYear}</span>
     </div>
   );
 }
 
 export default function MapLayer({ year: chapterYear, cityData, chapter, birthYear }) {
   const [scrubYear, setScrubYear] = useState(chapterYear);
-  const minYear = birthYear || MIN_ARCHIVE_YEAR;
-  const maxYear = new Date().getFullYear();
+  const [lastChapterYear, setLastChapterYear] = useState(chapterYear);
+
+  // The map no longer remounts per chapter, so follow the chapter year
+  // explicitly. Adjusting during render (rather than in an effect) avoids the
+  // extra commit and the cascading-render warning.
+  if (chapterYear !== lastChapterYear) {
+    setLastChapterYear(chapterYear);
+    setScrubYear(chapterYear);
+  }
 
   if (!cityData?.lat || !cityData?.lon) return null;
 
+  const minYear = birthYear || MIN_ARCHIVE_YEAR;
+  const maxYear = Math.max(minYear + 1, new Date().getFullYear());
+  const outsideArchive = scrubYear < MIN_ARCHIVE_YEAR || scrubYear > MAX_ARCHIVE_YEAR;
+
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+    <div className="map">
+      <div className="map__badge">{scrubYear}</div>
 
-      <div style={yearBadgeStyle}>{scrubYear}</div>
-
-      <div style={chapterBadgeStyle}>
+      <div className="map__context">
         {chapter === 3 ? '🌿 Vegetation signal' : '🛰 What the city looks like'}
       </div>
 
@@ -146,7 +166,7 @@ export default function MapLayer({ year: chapterYear, cityData, chapter, birthYe
         <GIBSTileLayer year={scrubYear} chapter={chapter} />
       </MapContainer>
 
-      <div style={scrubberContainerStyle}>
+      <div className="map__scrubber-wrap">
         <YearScrubber
           year={scrubYear}
           birthYear={birthYear || minYear}
@@ -154,111 +174,12 @@ export default function MapLayer({ year: chapterYear, cityData, chapter, birthYe
           maxYear={maxYear}
           onYearChange={setScrubYear}
         />
-        {scrubYear < MIN_ARCHIVE_YEAR || scrubYear > MAX_ARCHIVE_YEAR ? (
-          <p style={archiveNoteStyle}>
-            The image archive covers {MIN_ARCHIVE_YEAR}–{MAX_ARCHIVE_YEAR}. The year badge stays at {scrubYear}; the image uses the nearest available archive scene.
+        {outsideArchive && (
+          <p className="map__archive-note">
+            Imagery archive: {MIN_ARCHIVE_YEAR}–{MAX_ARCHIVE_YEAR}. {scrubYear} uses the nearest available scene.
           </p>
-        ) : null}
+        )}
       </div>
     </div>
   );
 }
-
-const yearBadgeStyle = {
-  position:       'absolute',
-  top:            16,
-  left:           16,
-  zIndex:         1000,
-  background:     'rgba(8,18,32,0.82)',
-  border:         '1px solid rgba(100,180,200,0.4)',
-  borderRadius:   20,
-  padding:        '4px 16px',
-  color:          '#90caf9',
-  fontSize:       16,
-  fontWeight:     700,
-  letterSpacing:  '0.05em',
-  backdropFilter: 'blur(8px)',
-};
-
-const chapterBadgeStyle = {
-  position:       'absolute',
-  top:            16,
-  right:          16,
-  zIndex:         1000,
-  background:     'rgba(8,18,32,0.75)',
-  border:         '1px solid rgba(255,255,255,0.12)',
-  borderRadius:   20,
-  padding:        '4px 14px',
-  color:          '#c8e6c9',
-  fontSize:       12,
-  fontWeight:     600,
-  backdropFilter: 'blur(8px)',
-};
-
-const scrubberContainerStyle = {
-  position:   'absolute',
-  bottom:     0,
-  left:       0,
-  right:      0,
-  zIndex:     1000,
-  background: 'linear-gradient(transparent, rgba(6,14,26,0.92))',
-  padding:    '24px 20px 14px',
-};
-
-const scrubberStyle = {
-  display:    'flex',
-  alignItems: 'center',
-  gap:        10,
-};
-
-const labelStyle = {
-  color:     'rgba(255,255,255,0.45)',
-  fontSize:  11,
-  fontWeight: 600,
-  minWidth:  32,
-  textAlign: 'center',
-};
-
-const sliderStyle = {
-  width:        '100%',
-  appearance:   'none',
-  height:       4,
-  borderRadius: 2,
-  background:   'rgba(255,255,255,0.2)',
-  outline:      'none',
-  cursor:       'pointer',
-};
-
-const birthMarkerStyle = {
-  position:      'absolute',
-  top:           -22,
-  transform:     'translateX(-50%)',
-  display:       'flex',
-  flexDirection: 'column',
-  alignItems:    'center',
-  pointerEvents: 'none',
-};
-
-const birthDotStyle = {
-  width:        8,
-  height:       8,
-  borderRadius: '50%',
-  background:   '#4fc3f7',
-  boxShadow:    '0 0 6px #4fc3f7',
-};
-
-const birthLabelStyle = {
-  fontSize:      9,
-  color:         '#4fc3f7',
-  fontWeight:    700,
-  marginTop:     2,
-  letterSpacing: '0.05em',
-};
-
-const archiveNoteStyle = {
-  margin: '8px 0 0',
-  color: 'rgba(255,255,255,0.72)',
-  fontSize: 10,
-  lineHeight: 1.4,
-  textAlign: 'center',
-};

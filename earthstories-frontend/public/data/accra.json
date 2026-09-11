@@ -159,14 +159,44 @@
   },
   "events": [
     {
+      "year": 2003,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.0 percentage points)"
+    },
+    {
+      "year": 2006,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.0 percentage points)"
+    },
+    {
+      "year": 2009,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.043 NDVI)"
+    },
+    {
+      "year": 2012,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.038 NDVI)"
+    },
+    {
+      "year": 2013,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.046 NDVI)"
+    },
+    {
       "year": 2013,
       "type": "heat",
-      "description": "Unusually hot year (+2.0\u00b0C above baseline)"
+      "description": "Unusually hot year (+2.0\u00b0C against the local baseline)"
     },
     {
       "year": 2020,
       "type": "heat",
-      "description": "Unusually hot year (+1.8\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.8\u00b0C against the local baseline)"
+    },
+    {
+      "year": 2021,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.3 percentage points)"
     }
   ]
 }

@@ -159,24 +159,39 @@
   },
   "events": [
     {
-      "year": 2006,
-      "type": "drought",
-      "description": "Significant surface water loss (-12 km\u00b2)"
+      "year": 2002,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.4 percentage points)"
+    },
+    {
+      "year": 2002,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.4 percentage points)"
+    },
+    {
+      "year": 2004,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.3 percentage points)"
+    },
+    {
+      "year": 2009,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.063 NDVI)"
     },
     {
       "year": 2009,
       "type": "heat",
-      "description": "Unusually hot year (+1.9\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.9\u00b0C against the local baseline)"
     },
     {
-      "year": 2016,
-      "type": "drought",
-      "description": "Significant surface water loss (-11 km\u00b2)"
+      "year": 2010,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.3 percentage points)"
     },
     {
-      "year": 2019,
-      "type": "drought",
-      "description": "Significant surface water loss (-10 km\u00b2)"
+      "year": 2012,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.3 percentage points)"
     }
   ]
 }

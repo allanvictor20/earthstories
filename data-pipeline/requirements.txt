@@ -1,0 +1,5 @@
+# Earth Stories data pipeline
+earthengine-api>=1.0.0
+
+# Testing
+pytest>=8.0.0

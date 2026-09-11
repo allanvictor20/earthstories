@@ -1,7 +1,3 @@
-// src/components/DataVizPanel.jsx
-// Module 7 — Data Visualisation Panel
-// Drop into: earthstories-frontend/src/components/DataVizPanel.jsx
-
 import {
   XAxis,
   YAxis,
@@ -12,84 +8,81 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
+import {
+  metricSeries,
+  valueAt,
+  formatChange,
+  formatSigned,
+  displayNumber,
+} from '../utils/metrics';
 
-function seriesFor(cityData, metric) {
-  return Object.entries(cityData.metrics?.[metric] || {})
-    .map(([year, value]) => ({ year: Number(year), value: Number(value) }))
-    .filter(point => Number.isFinite(point.year) && Number.isFinite(point.value))
-    .sort((a, b) => a.year - b.year);
-}
-
-function nearestValue(series, year) {
-  return series.filter(point => point.year <= year).at(-1) || series[0];
-}
-
-function formatChange(value, unit = '') {
-  if (!Number.isFinite(value)) return 'not enough data';
-  return `${value >= 0 ? '+' : ''}${value.toFixed(1)}${unit}`;
+function PanelHeader({ icon, title, subtitle }) {
+  return (
+    <div className="viz__header">
+      <span className="viz__icon" aria-hidden="true">{icon}</span>
+      <div>
+        <p className="viz__title">{title}</p>
+        <p className="viz__subtitle">{subtitle}</p>
+      </div>
+    </div>
+  );
 }
 
 function InsightsPanel({ cityData, birthYear }) {
-  const temperature = seriesFor(cityData, 'temperature_mean');
-  const anomaly = seriesFor(cityData, 'temperature_anomaly');
-  const vegetation = seriesFor(cityData, 'ndvi_mean');
-  const urban = seriesFor(cityData, 'urban_cover_pct');
+  const temperature = metricSeries(cityData, 'temperature_mean');
+  const anomaly = metricSeries(cityData, 'temperature_anomaly');
+  const vegetation = metricSeries(cityData, 'ndvi_mean');
+  const urban = metricSeries(cityData, 'urban_cover_pct');
+
   const start = temperature[0]?.year;
   const end = temperature.at(-1)?.year;
-  const startTemp = nearestValue(temperature, birthYear)?.value;
+  const startTemp = valueAt(temperature, birthYear)?.value;
   const endTemp = temperature.at(-1)?.value;
-  const warmest = anomaly.reduce((best, point) => point.value > best.value ? point : best, anomaly[0]);
-  const coolest = anomaly.reduce((best, point) => point.value < best.value ? point : best, anomaly[0]);
-  const startGreen = nearestValue(vegetation, birthYear)?.value;
+  const warmest = anomaly.reduce((best, p) => (p.value > best.value ? p : best), anomaly[0]);
+  const coolest = anomaly.reduce((best, p) => (p.value < best.value ? p : best), anomaly[0]);
+  const startGreen = valueAt(vegetation, birthYear)?.value;
   const endGreen = vegetation.at(-1)?.value;
-  const startUrban = nearestValue(urban, birthYear)?.value;
+  const startUrban = valueAt(urban, birthYear)?.value;
   const endUrban = urban.at(-1)?.value;
 
   const insights = [
     { icon: '🌡', title: 'Temperature', text: `${formatChange(endTemp - startTemp, '°C')} in the annual mean between the archive start and latest year.` },
-    { icon: '🔥', title: 'Biggest warm year', text: `${warmest?.year || 'n/a'} was ${warmest?.value >= 0 ? '+' : ''}${warmest?.value?.toFixed(1) || 'n/a'}°C vs the local baseline.` },
+    { icon: '🔥', title: 'Biggest warm year', text: `${warmest?.year ?? 'n/a'} was ${formatSigned(warmest?.value, '°C')} vs the local baseline.` },
     { icon: '🌿', title: 'Green cover', text: `${formatChange((endGreen - startGreen) * 100, ' percentage points')} in the vegetation signal.` },
     { icon: '🏙', title: 'Built-up land', text: `${formatChange(endUrban - startUrban, ' percentage points')} in mapped urban cover.` },
   ];
 
   return (
-    <div style={styles.chartPanel}>
-      <div style={styles.chartHeader}>
-        <span style={styles.chartIcon}>🔎</span>
-        <div>
-          <p style={styles.chartTitle}>Read the picture in plain language</p>
-          <p style={styles.chartSubtitle}>{cityData.city} · measured {start}–{end}</p>
-        </div>
-      </div>
-      <p style={styles.explainer}>The satellite image shows land and water. These four signals translate what the image and the sensor record mean on the ground.</p>
-      <div style={styles.insightGrid}>
+    <div className="viz">
+      <PanelHeader icon="🔎" title="Read the picture in plain language" subtitle={`${cityData.city} · measured ${start}–${end}`} />
+      <p className="viz__explainer">
+        The satellite image shows land and water. These four signals translate what the image and the sensor record mean on the ground.
+      </p>
+      <div className="insight-grid">
         {insights.map(insight => (
-          <div key={insight.title} style={styles.insightCard}>
-            <span style={styles.insightIcon}>{insight.icon}</span>
-            <div><strong style={styles.insightTitle}>{insight.title}</strong><p style={styles.insightText}>{insight.text}</p></div>
+          <div className="insight-card" key={insight.title}>
+            <span className="insight-card__icon" aria-hidden="true">{insight.icon}</span>
+            <div>
+              <strong>{insight.title}</strong>
+              <p>{insight.text}</p>
+            </div>
           </div>
         ))}
       </div>
-      <p style={styles.legend}>Warmest year: {warmest?.year || 'n/a'} · coolest year: {coolest?.year || 'n/a'}. Hover the charts for the exact annual reading.</p>
+      <p className="viz__legend">
+        Warmest year: {warmest?.year ?? 'n/a'} · coolest year: {coolest?.year ?? 'n/a'}. Hover the charts for the exact annual reading.
+      </p>
     </div>
   );
 }
 
-// ── Custom Tooltip ────────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{
-      background: 'rgba(10,22,40,0.92)',
-      border: '1px solid rgba(100,180,100,0.3)',
-      borderRadius: 6,
-      padding: '8px 12px',
-      fontSize: 12,
-      color: '#e0f0e0',
-    }}>
-      <p style={{ margin: 0, fontWeight: 700, color: '#7ecb8f' }}>{label}</p>
+    <div className="viz-tooltip">
+      <p className="viz-tooltip__label">{label}</p>
       {payload.map((p, i) => (
-        <p key={i} style={{ margin: '2px 0', color: p.color }}>
+        <p className="viz-tooltip__value" key={i} style={{ color: p.color }}>
           {p.name}: {typeof p.value === 'number' ? p.value.toFixed(3) : p.value}
         </p>
       ))}
@@ -97,26 +90,34 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-// ── NDVI Line Chart ───────────────────────────────────────────────────────────
 function NdviChart({ cityData, birthYear }) {
-  const ndviData = Object.entries(cityData.metrics?.ndvi_mean || {})
-    .map(([year, val]) => ({ year: parseInt(year), ndvi: val ?? 0 }))
-    .filter(d => d.ndvi > 0)
-    .sort((a, b) => a.year - b.year);
+  // Previously filtered on `ndvi > 0`, which silently dropped legitimate
+  // zero or negative readings (bare ground, water).
+  const series = metricSeries(cityData, 'ndvi_mean');
+  const ndviData = series.map(p => ({ year: p.year, ndvi: p.value }));
 
-  const minVal = Math.min(...ndviData.map(d => d.ndvi));
-  const maxVal = Math.max(...ndviData.map(d => d.ndvi));
-  const domain = [Math.max(0, minVal - 0.05), Math.min(1, maxVal + 0.05)];
+  if (!ndviData.length) {
+    return (
+      <div className="viz">
+        <PanelHeader icon="🌿" title="Vegetation Health (NDVI)" subtitle={cityData.city} />
+        <p className="viz__empty">No vegetation readings available for this city.</p>
+      </div>
+    );
+  }
+
+  const values = ndviData.map(d => d.ndvi);
+  const domain = [
+    Math.max(-1, Math.min(...values) - 0.05),
+    Math.min(1, Math.max(...values) + 0.05),
+  ];
 
   return (
-    <div style={styles.chartPanel}>
-      <div style={styles.chartHeader}>
-        <span style={styles.chartIcon}>🌿</span>
-        <div>
-          <p style={styles.chartTitle}>Vegetation Health (NDVI)</p>
-          <p style={styles.chartSubtitle}>{cityData.city} · 2001–2024</p>
-        </div>
-      </div>
+    <div className="viz">
+      <PanelHeader
+        icon="🌿"
+        title="Vegetation Health (NDVI)"
+        subtitle={`${cityData.city} · ${ndviData[0].year}–${ndviData.at(-1).year}`}
+      />
       <ResponsiveContainer width="100%" height={190}>
         <AreaChart data={ndviData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
           <defs>
@@ -126,16 +127,11 @@ function NdviChart({ cityData, birthYear }) {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-          <XAxis
-            dataKey="year"
-            tick={{ fontSize: 10, fill: '#7a9090' }}
-            tickLine={false}
-            interval={4}
-          />
+          <XAxis dataKey="year" tick={{ fontSize: 10, fill: '#8fa89a' }} tickLine={false} interval={4} />
           <YAxis
             domain={domain}
-            tickFormatter={(v) => v.toFixed(2)}
-            tick={{ fontSize: 10, fill: '#7a9090' }}
+            tickFormatter={v => v.toFixed(2)}
+            tick={{ fontSize: 10, fill: '#8fa89a' }}
             tickLine={false}
             axisLine={false}
           />
@@ -147,39 +143,36 @@ function NdviChart({ cityData, birthYear }) {
             label={{ value: 'Born', fill: '#4fc3f7', fontSize: 10, position: 'top' }}
           />
           <Area
-            type="monotone"
-            dataKey="ndvi"
-            name="NDVI"
-            stroke="#4caf81"
-            strokeWidth={2}
-            fill="url(#ndviGrad)"
-            dot={false}
-            activeDot={{ r: 4, fill: '#7ecb8f' }}
+            type="monotone" dataKey="ndvi" name="NDVI" stroke="#4caf81" strokeWidth={2}
+            fill="url(#ndviGrad)" dot={false} activeDot={{ r: 4, fill: '#7ecb8f' }}
           />
         </AreaChart>
       </ResponsiveContainer>
-      <p style={styles.legend}>
-        Higher values = more vegetation cover. Blue line marks your birth year.
-      </p>
+      <p className="viz__legend">Higher values = more vegetation cover. Blue line marks your birth year.</p>
     </div>
   );
 }
 
-// ── Temperature Anomaly Chart ────────────────────────────────────────────────
 function TempChart({ cityData, birthYear }) {
-  const tempData = Object.entries(cityData.metrics?.temperature_anomaly || {})
-    .map(([year, val]) => ({ year: parseInt(year), anomaly: val ?? 0 }))
-    .sort((a, b) => a.year - b.year);
+  const tempData = metricSeries(cityData, 'temperature_anomaly')
+    .map(p => ({ year: p.year, anomaly: p.value }));
+
+  if (!tempData.length) {
+    return (
+      <div className="viz">
+        <PanelHeader icon="🌡️" title="Temperature Anomaly" subtitle={cityData.city} />
+        <p className="viz__empty">No temperature readings available for this city.</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={styles.chartPanel}>
-      <div style={styles.chartHeader}>
-        <span style={styles.chartIcon}>🌡️</span>
-        <div>
-          <p style={styles.chartTitle}>Temperature Anomaly</p>
-          <p style={styles.chartSubtitle}>{cityData.city} · vs 2000–2010 baseline</p>
-        </div>
-      </div>
+    <div className="viz">
+      <PanelHeader
+        icon="🌡️"
+        title="Temperature Anomaly"
+        subtitle={`${cityData.city} · vs 2000–2010 baseline`}
+      />
       <ResponsiveContainer width="100%" height={190}>
         <AreaChart data={tempData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
           <defs>
@@ -189,17 +182,8 @@ function TempChart({ cityData, birthYear }) {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-          <XAxis
-            dataKey="year"
-            tick={{ fontSize: 10, fill: '#7a9090' }}
-            tickLine={false}
-            interval={4}
-          />
-          <YAxis
-            tick={{ fontSize: 10, fill: '#7a9090' }}
-            tickLine={false}
-            axisLine={false}
-          />
+          <XAxis dataKey="year" tick={{ fontSize: 10, fill: '#8fa89a' }} tickLine={false} interval={4} />
+          <YAxis tick={{ fontSize: 10, fill: '#8fa89a' }} tickLine={false} axisLine={false} />
           <Tooltip content={<CustomTooltip />} />
           <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" />
           <ReferenceLine
@@ -209,44 +193,47 @@ function TempChart({ cityData, birthYear }) {
             label={{ value: 'Born', fill: '#4fc3f7', fontSize: 10, position: 'top' }}
           />
           <Area
-            type="monotone"
-            dataKey="anomaly"
-            name="°C above baseline"
-            stroke="#ef5350"
-            strokeWidth={2}
-            fill="url(#tempGrad)"
-            dot={false}
-            activeDot={{ r: 4, fill: '#ef9a9a' }}
+            type="monotone" dataKey="anomaly" name="°C above baseline" stroke="#ef5350"
+            strokeWidth={2} fill="url(#tempGrad)" dot={false} activeDot={{ r: 4, fill: '#ef9a9a' }}
           />
         </AreaChart>
       </ResponsiveContainer>
-      <p style={styles.legend}>
+      <p className="viz__legend">
         Degrees Celsius above the 2000–2010 average. Positive = warmer than baseline.
       </p>
     </div>
   );
 }
 
-// ── Events Timeline ───────────────────────────────────────────────────────────
-const EVENT_ICONS = { heat: '🔥', drought: '🏜️', flood: '🌊', default: '📍' };
-const EVENT_COLORS = { heat: '#ff7043', drought: '#fbc02d', flood: '#42a5f5', default: '#b0bec5' };
+const EVENT_ICONS = {
+  heat: '🔥', drought: '🏜️', flood: '🌊',
+  greening: '🌱', browning: '🍂', urban_growth: '🏗️', forest_loss: '🪓',
+  default: '📍',
+};
+const EVENT_COLORS = {
+  heat: '#ff7043', drought: '#fbc02d', flood: '#42a5f5',
+  greening: '#66bb6a', browning: '#bf8f4a', urban_growth: '#ab91d9', forest_loss: '#8d6e63',
+  default: '#b0bec5',
+};
 
 function EventsTimeline({ cityData, birthYear }) {
   const events = (cityData.events || [])
     .filter(e => e.year >= birthYear)
     .sort((a, b) => a.year - b.year);
 
+  const header = (
+    <PanelHeader
+      icon="📅"
+      title="Events in Your Lifetime"
+      subtitle={`${cityData.city} · ${birthYear}–present`}
+    />
+  );
+
   if (!events.length) {
     return (
-      <div style={styles.chartPanel}>
-        <div style={styles.chartHeader}>
-          <span style={styles.chartIcon}>📅</span>
-          <div>
-            <p style={styles.chartTitle}>Events in Your Lifetime</p>
-            <p style={styles.chartSubtitle}>{cityData.city} · {birthYear}–present</p>
-          </div>
-        </div>
-        <p style={{ color: '#7a9090', fontSize: 13, padding: '12px 0' }}>
+      <div className="viz">
+        {header}
+        <p className="viz__empty">
           No significant environmental events detected in the dataset for this period.
         </p>
       </div>
@@ -254,28 +241,22 @@ function EventsTimeline({ cityData, birthYear }) {
   }
 
   return (
-    <div style={styles.chartPanel}>
-      <div style={styles.chartHeader}>
-        <span style={styles.chartIcon}>📅</span>
-        <div>
-          <p style={styles.chartTitle}>Events in Your Lifetime</p>
-          <p style={styles.chartSubtitle}>{cityData.city} · {birthYear}–present</p>
-        </div>
-      </div>
-      <div style={styles.timeline}>
+    <div className="viz">
+      {header}
+      <div className="timeline">
         {events.map((event, i) => {
           const color = EVENT_COLORS[event.type] || EVENT_COLORS.default;
-          const icon  = EVENT_ICONS[event.type]  || EVENT_ICONS.default;
+          const icon = EVENT_ICONS[event.type] || EVENT_ICONS.default;
           return (
-            <div key={i} style={styles.timelineRow}>
-              <div style={styles.timelineLine}>
-                <div style={{ ...styles.timelineDot, background: color }} />
-                {i < events.length - 1 && <div style={styles.timelineConnector} />}
+            <div className="timeline__row" key={`${event.year}-${event.type}-${i}`}>
+              <div className="timeline__rail">
+                <div className="timeline__dot" style={{ background: color }} />
+                {i < events.length - 1 && <div className="timeline__connector" />}
               </div>
-              <div style={styles.timelineContent}>
-                <span style={{ ...styles.eventYear, color }}>{event.year}</span>
-                <span style={styles.eventIcon}>{icon}</span>
-                <span style={styles.eventDesc}>{event.description}</span>
+              <div className="timeline__content">
+                <span className="timeline__year" style={{ color }}>{event.year}</span>
+                <span className="timeline__icon" aria-hidden="true">{icon}</span>
+                <span className="timeline__desc">{event.description}</span>
               </div>
             </div>
           );
@@ -285,77 +266,68 @@ function EventsTimeline({ cityData, birthYear }) {
   );
 }
 
-// ── Summary Mini-Charts ───────────────────────────────────────────────────────
 function SummaryPanel({ cityData, birthYear }) {
-  const years = Object.keys(cityData.metrics?.ndvi_mean || {}).map(Number).sort();
-  const firstYear = years.find(year => year >= birthYear) || years[0];
-  const lastYear  = Math.max(...years);
+  const ndvi = metricSeries(cityData, 'ndvi_mean');
+  const years = ndvi.map(p => p.year);
+  if (!years.length) return null;
 
-  const getValue = (metric, year) => {
-    const values = seriesFor(cityData, metric);
-    return nearestValue(values, year)?.value ?? null;
-  };
+  const firstYear = years.find(year => year >= birthYear) ?? years[0];
+  const lastYear = years.at(-1);
+  const read = (key, year) => valueAt(metricSeries(cityData, key), year)?.value ?? null;
 
-  const ndviStart  = getValue('ndvi_mean', firstYear);
-  const ndviEnd    = getValue('ndvi_mean', lastYear);
-  const tempStart  = getValue('temperature_anomaly', firstYear);
-  const tempEnd    = getValue('temperature_anomaly', lastYear);
-  const urbanStart = getValue('urban_cover_pct', firstYear);
-  const urbanEnd   = getValue('urban_cover_pct', lastYear);
+  const ndviStart = read('ndvi_mean', firstYear);
+  const ndviEnd = read('ndvi_mean', lastYear);
+  const tempStart = read('temperature_anomaly', firstYear);
+  const tempEnd = read('temperature_anomaly', lastYear);
+  const urbanStart = read('urban_cover_pct', firstYear);
+  const urbanEnd = read('urban_cover_pct', lastYear);
 
   const stats = [
     {
       label: 'Vegetation (NDVI)',
-      from: ndviStart?.toFixed(3),
-      to:   ndviEnd?.toFixed(3),
-      delta: ndviEnd && ndviStart ? ((ndviEnd - ndviStart) * 100).toFixed(1) + '%' : 'n/a',
-      positive: ndviEnd > ndviStart,
+      from: displayNumber(ndviStart, 3),
+      to: displayNumber(ndviEnd, 3),
+      delta: formatChange((ndviEnd - ndviStart) * 100, ' pts'),
+      tone: ndviEnd > ndviStart ? 'up' : 'down',
       icon: '🌿',
     },
     {
+      // These used to hard-code a "+", printing "+-0.4°C" for cooler years.
       label: 'Temp. Anomaly',
-      from: tempStart != null ? `+${tempStart.toFixed(1)}°C` : 'n/a',
-      to:   tempEnd   != null ? `+${tempEnd.toFixed(1)}°C`   : 'n/a',
-      delta: tempEnd != null && tempStart != null ? formatChange(tempEnd - tempStart, '°C') : 'n/a',
-      positive: !(tempEnd > tempStart),
+      from: formatSigned(tempStart, '°C'),
+      to: formatSigned(tempEnd, '°C'),
+      delta: formatChange(tempEnd - tempStart, '°C'),
+      tone: tempEnd > tempStart ? 'down' : 'up',
       icon: '🌡️',
     },
     {
       label: 'Urban Cover',
-      from: urbanStart != null ? `${urbanStart.toFixed(1)}%` : 'n/a',
-      to:   urbanEnd   != null ? `${urbanEnd.toFixed(1)}%`   : 'n/a',
-      delta: urbanEnd && urbanStart ? `+${(urbanEnd - urbanStart).toFixed(1)}%` : 'n/a',
-      positive: null,
+      from: displayNumber(urbanStart, 1, '%'),
+      to: displayNumber(urbanEnd, 1, '%'),
+      delta: formatChange(urbanEnd - urbanStart, '%'),
+      tone: 'neutral',
       icon: '🏙️',
     },
   ];
 
   return (
-    <div style={styles.chartPanel}>
-      <div style={styles.chartHeader}>
-        <span style={styles.chartIcon}>📊</span>
-        <div>
-          <p style={styles.chartTitle}>Your Lifetime at a Glance</p>
-          <p style={styles.chartSubtitle}>{cityData.city} · {birthYear}–{lastYear}</p>
-        </div>
-      </div>
-      <div style={styles.summaryGrid}>
-        {stats.map((s, i) => (
-          <div key={i} style={styles.statCard}>
-            <p style={styles.statIcon}>{s.icon}</p>
-            <p style={styles.statLabel}>{s.label}</p>
-            <div style={styles.statRow}>
-              <span style={styles.statVal}>{s.from}</span>
-              <span style={styles.statArrow}>→</span>
-              <span style={styles.statVal}>{s.to}</span>
+    <div className="viz">
+      <PanelHeader
+        icon="📊"
+        title="Your Lifetime at a Glance"
+        subtitle={`${cityData.city} · ${firstYear}–${lastYear}`}
+      />
+      <div className="summary-grid">
+        {stats.map(s => (
+          <div className="stat-card" key={s.label}>
+            <p className="stat-card__icon" aria-hidden="true">{s.icon}</p>
+            <p className="stat-card__label">{s.label}</p>
+            <div className="stat-card__row">
+              <span className="stat-card__value">{s.from}</span>
+              <span className="stat-card__arrow" aria-hidden="true">→</span>
+              <span className="stat-card__value">{s.to}</span>
             </div>
-            <p style={{
-              ...styles.statDelta,
-              color: s.positive === null ? '#b0bec5'
-                   : s.positive ? '#4caf81' : '#ef5350',
-            }}>
-              {s.delta}
-            </p>
+            <p className={`stat-card__delta stat-card__delta--${s.tone}`}>{s.delta}</p>
           </div>
         ))}
       </div>
@@ -363,135 +335,15 @@ function SummaryPanel({ cityData, birthYear }) {
   );
 }
 
-// ── Main Export ───────────────────────────────────────────────────────────────
 export default function DataVizPanel({ type, cityData, birthYear }) {
   if (!cityData) return null;
 
   switch (type) {
     case 'insights': return <InsightsPanel cityData={cityData} birthYear={birthYear} />;
-    case 'ndvi':    return <NdviChart    cityData={cityData} birthYear={birthYear} />;
-    case 'temp':    return <TempChart    cityData={cityData} birthYear={birthYear} />;
-    case 'events':  return <EventsTimeline cityData={cityData} birthYear={birthYear} />;
-    case 'summary': return <SummaryPanel cityData={cityData} birthYear={birthYear} />;
-    default:        return null;
+    case 'ndvi':     return <NdviChart cityData={cityData} birthYear={birthYear} />;
+    case 'temp':     return <TempChart cityData={cityData} birthYear={birthYear} />;
+    case 'events':   return <EventsTimeline cityData={cityData} birthYear={birthYear} />;
+    case 'summary':  return <SummaryPanel cityData={cityData} birthYear={birthYear} />;
+    default:         return null;
   }
 }
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-const styles = {
-  chartPanel: {
-    background: 'rgba(8,18,32,0.88)',
-    backdropFilter: 'blur(12px)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 10,
-    padding: '14px 16px',
-    margin: '8px 0',
-    color: '#d0e8d8',
-  },
-  chartHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  chartIcon: {
-    fontSize: 22,
-    lineHeight: 1,
-  },
-  chartTitle: {
-    margin: 0,
-    fontSize: 13,
-    fontWeight: 700,
-    color: '#c8e6c9',
-    letterSpacing: '0.02em',
-  },
-  chartSubtitle: {
-    margin: 0,
-    fontSize: 11,
-    color: '#607d6b',
-  },
-  explainer: { margin: '0 0 12px', fontSize: 12, lineHeight: 1.5, color: '#b9cfbf' },
-  insightGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 },
-  insightCard: { display: 'flex', gap: 8, alignItems: 'flex-start', padding: 9, background: 'rgba(255,255,255,0.05)', borderRadius: 8 },
-  insightIcon: { fontSize: 18, lineHeight: 1 },
-  insightTitle: { display: 'block', color: '#d6eed8', fontSize: 11, marginBottom: 3 },
-  insightText: { margin: 0, color: '#a8c0ad', fontSize: 10, lineHeight: 1.4 },
-  legend: {
-    margin: '8px 0 0',
-    fontSize: 10,
-    color: '#546e60',
-    fontStyle: 'italic',
-  },
-  // Timeline
-  timeline: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 0,
-    paddingTop: 4,
-  },
-  timelineRow: {
-    display: 'flex',
-    gap: 10,
-    alignItems: 'flex-start',
-    minHeight: 40,
-  },
-  timelineLine: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    width: 14,
-    flexShrink: 0,
-  },
-  timelineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: '50%',
-    flexShrink: 0,
-    marginTop: 3,
-  },
-  timelineConnector: {
-    width: 2,
-    flex: 1,
-    minHeight: 20,
-    background: 'rgba(255,255,255,0.1)',
-    marginTop: 3,
-  },
-  timelineContent: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    gap: 5,
-    paddingBottom: 10,
-  },
-  eventYear: {
-    fontSize: 12,
-    fontWeight: 700,
-  },
-  eventIcon: {
-    fontSize: 13,
-  },
-  eventDesc: {
-    fontSize: 12,
-    color: '#9db8a8',
-    lineHeight: 1.4,
-  },
-  // Summary grid
-  summaryGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: 8,
-    marginTop: 4,
-  },
-  statCard: {
-    background: 'rgba(255,255,255,0.04)',
-    borderRadius: 8,
-    padding: '10px 8px',
-    textAlign: 'center',
-  },
-  statIcon:  { fontSize: 18, margin: '0 0 4px' },
-  statLabel: { fontSize: 10, color: '#7a9090', margin: '0 0 6px', lineHeight: 1.3 },
-  statRow:   { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 },
-  statVal:   { fontSize: 11, color: '#c8e6c9', fontWeight: 600 },
-  statArrow: { fontSize: 10, color: '#546e60' },
-  statDelta: { fontSize: 11, fontWeight: 700, margin: '4px 0 0' },
-};

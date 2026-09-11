@@ -1,54 +1,111 @@
-import { useState } from 'react';
+import { lazy, Suspense, useCallback, useState } from 'react';
 import Onboarding from './components/Onboarding';
-import StoryEngine from './components/StoryEngine';
 import { generateNarration } from './services/narration';
 
-export default function App() {
-  const [userData, setUserData]   = useState(null);
-  const [cityData, setCityData]   = useState(null);
-  const [narrations, setNarrations] = useState({});
-  const [loading, setLoading]     = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState('');
+// Recharts + Leaflet live behind this boundary — roughly two thirds of the
+// bundle — so the onboarding screen no longer waits on them.
+const StoryEngine = lazy(() => import('./components/StoryEngine'));
 
-  const handleSubmit = async ({ cityKey, birthYear }) => {
+const TOTAL_CHAPTERS = 6;
+
+export default function App() {
+  const [userData, setUserData] = useState(null);
+  const [cityData, setCityData] = useState(null);
+  const [narrations, setNarrations] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = useCallback(async ({ cityKey, birthYear }) => {
     setLoading(true);
+    setError('');
     setLoadingMsg('Loading city data...');
 
-    const profile = await fetch(`/data/${cityKey}.json`).then(r => r.json());
-    setCityData(profile);
-
-    const apiKey = import.meta.env.VITE_AI_API_KEY;
-    const results = {};
-
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-    for (let ch = 1; ch <= 6; ch++) {
-      setLoadingMsg(`Writing chapter ${ch} of 6...`);
-      results[ch] = await generateNarration(ch, profile, birthYear, apiKey);
-      if (ch < 6) await delay(1000);
+    let profile;
+    try {
+      const response = await fetch(`/data/${cityKey}.json`);
+      if (!response.ok) {
+        throw new Error(`We could not load the data for this city (${response.status}).`);
+      }
+      profile = await response.json();
+    } catch (err) {
+      setError(err.message || 'Something went wrong loading your city data.');
+      setLoading(false);
+      return;
     }
 
-    setNarrations(results);
+    setCityData(profile);
+    setNarrations({});
+
+    // Chapter 1 gates the UI; the rest stream in behind it while the reader
+    // is already scrolling, instead of holding a blank screen for ~15s.
+    setLoadingMsg('Writing your opening chapter...');
+    try {
+      const first = await generateNarration(1, profile, birthYear);
+      setNarrations({ 1: first });
+    } catch (err) {
+      setError(err.message || 'Something went wrong writing your story.');
+      setLoading(false);
+      return;
+    }
+
     setUserData({ cityKey, birthYear });
     setLoading(false);
-  };
 
-  if (loading) return (
-    <div className="loading">
-      <p>{loadingMsg}</p>
-      <p style={{ fontSize: '0.9rem', color: '#4a9eda', marginTop: '0.5rem' }}>
-        Generating your personal story...
-      </p>
-    </div>
-  );
+    for (let chapter = 2; chapter <= TOTAL_CHAPTERS; chapter++) {
+      try {
+        const text = await generateNarration(chapter, profile, birthYear);
+        setNarrations(prev => ({ ...prev, [chapter]: text }));
+      } catch {
+        // generateNarration already falls back to pre-written text; a throw
+        // here means the request was aborted, so stop filling chapters.
+        break;
+      }
+    }
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    setError('');
+    setUserData(null);
+    setCityData(null);
+    setNarrations({});
+  }, []);
+
+  if (error) {
+    return (
+      <div className="status-screen" role="alert">
+        <p className="status-screen__title">{error}</p>
+        <button type="button" className="submit-btn status-screen__action" onClick={handleRetry}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="status-screen" role="status" aria-live="polite">
+        <p className="status-screen__title">{loadingMsg}</p>
+        <p className="status-screen__subtitle">Generating your personal story...</p>
+      </div>
+    );
+  }
 
   if (!userData) return <Onboarding onSubmit={handleSubmit} />;
 
   return (
-    <StoryEngine
-      cityData={cityData}
-      birthYear={userData.birthYear}
-      narrations={narrations}
-    />
+    <Suspense
+      fallback={
+        <div className="status-screen" role="status" aria-live="polite">
+          <p className="status-screen__title">Opening your story...</p>
+        </div>
+      }
+    >
+      <StoryEngine
+        cityData={cityData}
+        birthYear={userData.birthYear}
+        narrations={narrations}
+      />
+    </Suspense>
   );
 }

@@ -157,5 +157,21 @@
       "2022": null
     }
   },
-  "events": []
+  "events": [
+    {
+      "year": 2009,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.010 NDVI)"
+    },
+    {
+      "year": 2010,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.009 NDVI)"
+    },
+    {
+      "year": 2011,
+      "type": "drought",
+      "description": "Marked surface water loss (-2.4 km\u00b2)"
+    }
+  ]
 }

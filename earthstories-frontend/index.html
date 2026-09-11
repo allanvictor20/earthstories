@@ -4,10 +4,33 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>earthstories-frontend</title>
+    <meta name="theme-color" content="#0a1628" />
+
+    <title>Earth Stories — What happened to your home while you were alive?</title>
+    <meta
+      name="description"
+      content="An AI-narrated environmental documentary built from NASA satellite data. Enter your city and birth year to see what changed across your lifetime."
+    />
+
+    <!-- Social previews: the app's whole point is a shareable card, so links
+         need to render as more than a blank box. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Earth Stories" />
+    <meta
+      property="og:description"
+      content="What happened to your home while you were alive? See what NASA satellites recorded about your city."
+    />
+    <meta property="og:image" content="/og-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Earth Stories" />
+    <meta
+      name="twitter:description"
+      content="What happened to your home while you were alive? See what NASA satellites recorded about your city."
+    />
   </head>
   <body>
     <div id="root"></div>
+    <noscript>Earth Stories needs JavaScript enabled to render your satellite story.</noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

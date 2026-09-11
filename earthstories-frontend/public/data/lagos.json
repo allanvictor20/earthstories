@@ -159,54 +159,74 @@
   },
   "events": [
     {
+      "year": 2002,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.8 percentage points)"
+    },
+    {
+      "year": 2006,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.045 NDVI)"
+    },
+    {
       "year": 2006,
       "type": "drought",
-      "description": "Significant surface water loss (-137 km\u00b2)"
+      "description": "Marked surface water loss (-137.4 km\u00b2)"
     },
     {
-      "year": 2009,
-      "type": "drought",
-      "description": "Significant surface water loss (-13 km\u00b2)"
+      "year": 2007,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.055 NDVI)"
     },
     {
-      "year": 2016,
-      "type": "drought",
-      "description": "Significant surface water loss (-12 km\u00b2)"
+      "year": 2007,
+      "type": "flood",
+      "description": "Surface water rose sharply (+123.9 km\u00b2)"
+    },
+    {
+      "year": 2015,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+1.2 percentage points)"
+    },
+    {
+      "year": 2017,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.6 percentage points)"
     },
     {
       "year": 2017,
       "type": "heat",
-      "description": "Unusually hot year (+1.6\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.6\u00b0C against the local baseline)"
     },
     {
       "year": 2018,
       "type": "heat",
-      "description": "Unusually hot year (+1.9\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.9\u00b0C against the local baseline)"
     },
     {
       "year": 2019,
       "type": "heat",
-      "description": "Unusually hot year (+2.4\u00b0C above baseline)"
+      "description": "Unusually hot year (+2.4\u00b0C against the local baseline)"
     },
     {
       "year": 2020,
       "type": "heat",
-      "description": "Unusually hot year (+2.4\u00b0C above baseline)"
+      "description": "Unusually hot year (+2.4\u00b0C against the local baseline)"
     },
     {
       "year": 2021,
       "type": "heat",
-      "description": "Unusually hot year (+1.9\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.9\u00b0C against the local baseline)"
     },
     {
       "year": 2022,
       "type": "heat",
-      "description": "Unusually hot year (+2.0\u00b0C above baseline)"
+      "description": "Unusually hot year (+2.0\u00b0C against the local baseline)"
     },
     {
       "year": 2023,
       "type": "heat",
-      "description": "Unusually hot year (+2.1\u00b0C above baseline)"
+      "description": "Unusually hot year (+2.1\u00b0C against the local baseline)"
     }
   ]
 }

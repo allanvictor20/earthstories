@@ -1,48 +1,51 @@
-import ee, json, os
-from config.cities import CITIES
+"""MODIS land surface temperature and anomaly vs a fixed baseline."""
+import ee
 
-ee.Initialize(project='earth-stories-hackathon')
-os.makedirs('../output', exist_ok=True)
+from config.runner import initialize_ee, run_for_all_cities
+from config.settings import BASELINE_END, BASELINE_START, TEMPERATURE_YEARS
 
-def get_baseline(bbox):
-    val = (ee.ImageCollection('MODIS/061/MOD11A2')
-        .filterDate('2000-01-01', '2010-12-31')
-        .filterBounds(bbox)
-        .select('LST_Day_1km')
-        .mean()
-        .reduceRegion(ee.Reducer.mean(), bbox, 1000)
-        .getInfo().get('LST_Day_1km', None))
-    return (val * 0.02 - 273.15) if val else None
+LST_SCALE = 0.02
+KELVIN_OFFSET = 273.15
 
-def fetch_temperature(city_key, city_data):
-    bbox = ee.Geometry.Rectangle(city_data['bbox'])
-    baseline_c = get_baseline(bbox)
-    print(f'  {city_key} baseline temp: {round(baseline_c, 2) if baseline_c else "N/A"}°C')
-    results = {}
-    for year in range(2001, 2025):
-        print(f'  {city_key} temperature {year}...')
-        val = (ee.ImageCollection('MODIS/061/MOD11A2')
-            .filterDate(f'{year}-01-01', f'{year}-12-31')
+
+def _mean_lst(bbox, start, end):
+    return (ee.ImageCollection('MODIS/061/MOD11A2')
+            .filterDate(start, end)
             .filterBounds(bbox)
             .select('LST_Day_1km')
             .mean()
             .reduceRegion(ee.Reducer.mean(), bbox, 1000)
             .getInfo().get('LST_Day_1km', None))
-        if val:
-            temp_c = val * 0.02 - 273.15
-            results[str(year)] = {
-                'mean_celsius':    round(temp_c, 2),
-                'anomaly_celsius': round(temp_c - baseline_c, 2) if baseline_c else None,
-            }
-        else:
+
+
+def _to_celsius(value):
+    # `if value` treated a raw reading of 0 as missing.
+    return None if value is None else value * LST_SCALE - KELVIN_OFFSET
+
+
+def fetch_temperature_for_city(city_key, city_data):
+    bbox = ee.Geometry.Rectangle(city_data['bbox'])
+    baseline_c = _to_celsius(_mean_lst(bbox, BASELINE_START, BASELINE_END))
+    print(f'  {city_key} baseline temp: '
+          f'{round(baseline_c, 2) if baseline_c is not None else "N/A"}°C')
+
+    results = {}
+    for year in TEMPERATURE_YEARS:
+        print(f'  {city_key} temperature {year}...')
+        temp_c = _to_celsius(_mean_lst(bbox, f'{year}-01-01', f'{year}-12-31'))
+
+        if temp_c is None:
             results[str(year)] = {'mean_celsius': None, 'anomaly_celsius': None}
+            continue
+
+        results[str(year)] = {
+            'mean_celsius': round(temp_c, 2),
+            'anomaly_celsius': round(temp_c - baseline_c, 2) if baseline_c is not None else None,
+        }
+
     return results
 
-for city_key, city_data in CITIES.items():
-    print(f'\nProcessing {city_data["name"]}...')
-    data = fetch_temperature(city_key, city_data)
-    with open(f'../output/temperature_{city_key}.json', 'w') as f:
-        json.dump(data, f, indent=2)
-    print(f'  Saved temperature_{city_key}.json')
 
-print('\nAll temperature done.')
+if __name__ == '__main__':
+    initialize_ee()
+    run_for_all_cities('temperature', fetch_temperature_for_city)

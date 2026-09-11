@@ -1,29 +1,33 @@
-import ee, json, os
-from config.cities import CITIES
+"""MODIS vegetation index (NDVI) per city, per year."""
+import ee
 
-ee.Initialize(project='earth-stories-hackathon')
-os.makedirs('../output', exist_ok=True)
+from config.runner import initialize_ee, run_for_all_cities
+from config.settings import NDVI_YEARS
+
+NDVI_SCALE = 0.0001
+
 
 def fetch_ndvi_for_city(city_key, city_data):
     bbox = ee.Geometry.Rectangle(city_data['bbox'])
     results = {}
-    for year in range(2001, 2025):
+
+    for year in NDVI_YEARS:
         print(f'  {city_key} NDVI {year}...')
         collection = (ee.ImageCollection('MODIS/061/MOD13A3')
-            .filterDate(f'{year}-01-01', f'{year}-12-31')
-            .filterBounds(bbox)
-            .select('NDVI'))
+                      .filterDate(f'{year}-01-01', f'{year}-12-31')
+                      .filterBounds(bbox)
+                      .select('NDVI'))
         ndvi_raw = (collection.mean()
-            .reduceRegion(reducer=ee.Reducer.mean(), geometry=bbox, scale=500, maxPixels=1e9)
-            .getInfo().get('NDVI', None))
-        results[str(year)] = round(ndvi_raw * 0.0001, 4) if ndvi_raw else None
+                    .reduceRegion(reducer=ee.Reducer.mean(), geometry=bbox,
+                                  scale=500, maxPixels=1e9)
+                    .getInfo().get('NDVI', None))
+        # `if ndvi_raw` discarded a legitimate NDVI of exactly 0 (bare ground,
+        # water) as missing data.
+        results[str(year)] = round(ndvi_raw * NDVI_SCALE, 4) if ndvi_raw is not None else None
+
     return results
 
-for city_key, city_data in CITIES.items():
-    print(f'\nProcessing {city_data["name"]}...')
-    data = fetch_ndvi_for_city(city_key, city_data)
-    with open(f'../output/ndvi_{city_key}.json', 'w') as f:
-        json.dump(data, f, indent=2)
-    print(f'  Saved ndvi_{city_key}.json')
 
-print('\nAll NDVI done.')
+if __name__ == '__main__':
+    initialize_ee()
+    run_for_all_cities('ndvi', fetch_ndvi_for_city)
