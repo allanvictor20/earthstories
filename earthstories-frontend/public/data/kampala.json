@@ -159,9 +159,44 @@
   },
   "events": [
     {
+      "year": 2004,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.5 percentage points)"
+    },
+    {
+      "year": 2005,
+      "type": "forest_loss",
+      "description": "Notable loss of forest cover (-0.3 percentage points)"
+    },
+    {
+      "year": 2016,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.028 NDVI)"
+    },
+    {
       "year": 2016,
       "type": "heat",
-      "description": "Unusually hot year (+1.6\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.6\u00b0C against the local baseline)"
+    },
+    {
+      "year": 2017,
+      "type": "browning",
+      "description": "Vegetation fell below its recent average (-0.027 NDVI)"
+    },
+    {
+      "year": 2017,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.6 percentage points)"
+    },
+    {
+      "year": 2021,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.5 percentage points)"
+    },
+    {
+      "year": 2022,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.7 percentage points)"
     }
   ]
 }

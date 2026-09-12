@@ -7,6 +7,30 @@
  * Draws a warming-stripe style personalised PNG card (1200x630px)
  * and triggers a browser download.
  */
+
+/**
+ * Deterministic PRNG (mulberry32). The starfield used Math.random(), so the
+ * same story exported a different card every time; seeding it from the city
+ * and birth year makes a given Earth Story reproducible.
+ */
+function seededRandom(seed) {
+  let t = seed >>> 0;
+  return () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let x = Math.imul(t ^ (t >>> 15), 1 | t);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function seedFrom(text) {
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
 export async function generateShareCard(cityData, birthYear) {
   const canvas = document.createElement('canvas');
   canvas.width  = 1200;
@@ -54,13 +78,14 @@ export async function generateShareCard(cityData, birthYear) {
 
   // ── Star field (subtle) ───────────────────────────────────────────────────
   ctx.save();
+  const random = seededRandom(seedFrom(`${cityData.city_key || city}-${birthYear}`));
   for (let i = 0; i < 60; i++) {
-    const x = Math.random() * 1200;
-    const y = Math.random() * 280;
-    const r = Math.random() * 1.2 + 0.2;
+    const x = random() * 1200;
+    const y = random() * 280;
+    const r = random() * 1.2 + 0.2;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.4 + 0.1})`;
+    ctx.fillStyle = `rgba(255,255,255,${random() * 0.4 + 0.1})`;
     ctx.fill();
   }
   ctx.restore();

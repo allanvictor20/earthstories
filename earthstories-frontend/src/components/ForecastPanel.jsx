@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { buildForecast, fetchNasaBaseline } from '../services/climateForecast';
-
-const formatValue = (value, digits = 1) => value == null ? 'n/a' : value.toFixed(digits);
+import { displayNumber, formatSigned } from '../utils/metrics';
 
 export default function ForecastPanel({ cityData, targetYear }) {
   const [nasaBaseline, setNasaBaseline] = useState(null);
@@ -9,18 +8,20 @@ export default function ForecastPanel({ cityData, targetYear }) {
   const forecast = buildForecast(cityData, targetYear);
 
   useEffect(() => {
-    let active = true;
-    fetchNasaBaseline(cityData)
+    const controller = new AbortController();
+
+    fetchNasaBaseline(cityData, { signal: controller.signal })
       .then(data => {
-        if (active) {
-          setNasaBaseline(data);
-          setNasaStatus('ready');
-        }
+        if (controller.signal.aborted) return;
+        setNasaBaseline(data);
+        setNasaStatus('ready');
       })
-      .catch(() => {
-        if (active) setNasaStatus('unavailable');
+      .catch(err => {
+        if (err.name === 'AbortError' || controller.signal.aborted) return;
+        setNasaStatus('unavailable');
       });
-    return () => { active = false; };
+
+    return () => controller.abort();
   }, [cityData]);
 
   const sourceRange = forecast.temperature?.sourceStart && forecast.temperature?.sourceEnd
@@ -31,85 +32,104 @@ export default function ForecastPanel({ cityData, targetYear }) {
   const moreUrban = forecast.urban?.slope > 0;
 
   return (
-    <div style={styles.panel}>
-      <div style={styles.eyebrow}>Trend projection · age 50</div>
-      <h3 style={styles.title}>Your Next Chapter</h3>
-      <p style={styles.intro}>
+    <div className="forecast">
+      <div className="forecast__eyebrow">Trend projection · age 50</div>
+      <h3 className="forecast__title">Your Next Chapter</h3>
+      <p className="forecast__intro">
         If the recent direction continues, this is one possible view of {cityData.city} in {targetYear}.
         It is a scenario, not a certainty.
       </p>
 
-      <div style={styles.grid}>
-        <ForecastCard label="Mean temperature" value={`${formatValue(forecast.temperature?.value)}°C`} />
-        <ForecastCard label="Temperature anomaly" value={`${forecast.temperatureAnomaly?.value >= 0 ? '+' : ''}${formatValue(forecast.temperatureAnomaly?.value)}°C`} />
-        <ForecastCard label="Vegetation index" value={formatValue(forecast.ndvi?.value, 3)} />
-        <ForecastCard label="Urban cover" value={`${formatValue(forecast.urban?.value)}%`} />
+      <div className="forecast__grid">
+        <ForecastCard label="Mean temperature" projection={forecast.temperature} unit="°C" />
+        <ForecastCard label="Temperature anomaly" projection={forecast.temperatureAnomaly} unit="°C" signed />
+        <ForecastCard label="Vegetation index" projection={forecast.ndvi} digits={3} />
+        <ForecastCard label="Urban cover" projection={forecast.urban} unit="%" />
       </div>
 
-      <div style={styles.futureEffects}>
-        <p style={styles.effectsTitle}>What this possible future could affect</p>
-        <ForecastEffect icon="🌡" title="People and health" text={warmer ? 'More heat can increase heat exposure and the need for shade, water, cooling, and heat-safe work and school days.' : 'A cooler trend could reduce some heat pressure, but individual hot years can still happen.'} />
-        <ForecastEffect icon="🌿" title="Plants and wildlife" text={greener ? 'A stronger vegetation signal could provide more shade and habitat, depending on which plants are growing.' : 'A weaker vegetation signal could mean less shade, more exposed soil, and tougher conditions for urban nature.'} />
-        <ForecastEffect icon="🏙" title="The city" text={moreUrban ? 'More built-up land can store heat and change how rain moves through streets, drains, and waterways.' : 'A slower urban trend could leave more room for open land, but planning choices still shape local resilience.'} />
-        <ForecastEffect icon="🌍" title="The wider Earth" text="Local land choices connect to larger water, carbon, habitat, and climate systems. This projection is a prompt for choices, not a verdict." />
+      <div className="forecast__effects">
+        <p className="forecast__effects-title">What this possible future could affect</p>
+        <ForecastEffect
+          icon="🌡" title="People and health"
+          text={warmer
+            ? 'More heat can increase heat exposure and the need for shade, water, cooling, and heat-safe work and school days.'
+            : 'A cooler trend could reduce some heat pressure, but individual hot years can still happen.'}
+        />
+        <ForecastEffect
+          icon="🌿" title="Plants and wildlife"
+          text={greener
+            ? 'A stronger vegetation signal could provide more shade and habitat, depending on which plants are growing.'
+            : 'A weaker vegetation signal could mean less shade, more exposed soil, and tougher conditions for urban nature.'}
+        />
+        <ForecastEffect
+          icon="🏙" title="The city"
+          text={moreUrban
+            ? 'More built-up land can store heat and change how rain moves through streets, drains, and waterways.'
+            : 'A slower urban trend could leave more room for open land, but planning choices still shape local resilience.'}
+        />
+        <ForecastEffect
+          icon="🌍" title="The wider Earth"
+          text="Local land choices connect to larger water, carbon, habitat, and climate systems. This projection is a prompt for choices, not a verdict."
+        />
       </div>
 
-      <div style={styles.sourceRow}>
-        <span style={styles.sourceDot} data-status={nasaStatus} />
-        {nasaStatus === 'ready'
-          ? `NASA POWER baseline: ${formatValue(nasaBaseline.temperature)}°C in ${nasaBaseline.year}`
+      <div className="forecast__source">
+        <span className="forecast__source-dot" data-status={nasaStatus} />
+        {nasaStatus === 'ready' && nasaBaseline
+          ? `NASA POWER baseline: ${displayNumber(nasaBaseline.temperature, 1, '°C')} in ${nasaBaseline.year}`
           : nasaStatus === 'loading'
             ? 'Connecting to NASA POWER baseline...'
             : 'NASA POWER baseline unavailable; local data projection shown'}
       </div>
-      <p style={styles.note}>
-        Projection uses a linear continuation of {sourceRange} in the city record. NASA POWER is used as a live reference point, not as a claim about the future.
+
+      <p className="forecast__note">
+        Projection is a least-squares fit over {sourceRange} in the city record, shown with a range
+        rather than a single number. NASA POWER is used as a live reference point, not as a claim
+        about the future.
       </p>
     </div>
   );
 }
 
-function ForecastCard({ label, value }) {
+function ForecastCard({ label, projection, unit = '', digits = 1, signed = false }) {
+  if (!projection) {
+    return (
+      <div className="forecast-card">
+        <span className="forecast-card__label">{label}</span>
+        <strong className="forecast-card__value">n/a</strong>
+        <span className="forecast-card__caveat">Not enough measured years to project.</span>
+      </div>
+    );
+  }
+
+  const format = value => (signed
+    ? formatSigned(value, unit, digits)
+    : displayNumber(value, digits, unit));
+
   return (
-    <div style={styles.card}>
-      <span style={styles.cardLabel}>{label}</span>
-      <strong style={styles.cardValue}>{value}</strong>
+    <div className="forecast-card">
+      <span className="forecast-card__label">{label}</span>
+      <strong className="forecast-card__value">{format(projection.value)}</strong>
+      <span className="forecast-card__range">
+        range {format(projection.value - projection.margin)} to {format(projection.value + projection.margin)}
+      </span>
+      {!projection.reliable && (
+        <span className="forecast-card__caveat">
+          The record is too varied year to year to project this confidently.
+        </span>
+      )}
     </div>
   );
 }
 
 function ForecastEffect({ icon, title, text }) {
   return (
-    <div style={styles.effect}>
-      <span style={styles.effectIcon}>{icon}</span>
-      <div><strong style={styles.effectTitle}>{title}</strong><p style={styles.effectText}>{text}</p></div>
+    <div className="forecast-effect">
+      <span className="forecast-effect__icon" aria-hidden="true">{icon}</span>
+      <div>
+        <strong>{title}</strong>
+        <p>{text}</p>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  panel: {
-    background: 'linear-gradient(145deg, rgba(20,35,39,0.96), rgba(27,54,48,0.94))',
-    border: '1px solid rgba(126,203,143,0.35)',
-    borderRadius: 10,
-    padding: '16px 18px',
-    margin: '8px 0',
-    color: '#e5f4e7',
-  },
-  eyebrow: { color: '#8bd39b', fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' },
-  title: { margin: '5px 0 7px', fontSize: 22, color: '#f4fff3' },
-  intro: { margin: '0 0 14px', color: '#bdd8c2', fontSize: 12, lineHeight: 1.55 },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 7 },
-  card: { background: 'rgba(255,255,255,0.07)', borderRadius: 7, padding: '9px 10px' },
-  cardLabel: { display: 'block', color: '#9cbca3', fontSize: 10, lineHeight: 1.25, marginBottom: 4 },
-  cardValue: { color: '#f4fff3', fontSize: 16 },
-  sourceRow: { display: 'flex', alignItems: 'center', gap: 7, marginTop: 13, color: '#c4e4ca', fontSize: 10 },
-  sourceDot: { width: 7, height: 7, borderRadius: '50%', background: '#f2b84b', flexShrink: 0 },
-  note: { margin: '10px 0 0', color: '#87a68f', fontSize: 10, lineHeight: 1.45, fontStyle: 'italic' },
-  futureEffects: { marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(139,211,155,0.18)' },
-  effectsTitle: { margin: '0 0 8px', color: '#d6eed8', fontSize: 11, fontWeight: 700 },
-  effect: { display: 'flex', gap: 8, alignItems: 'flex-start', padding: '7px 8px', marginTop: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 6 },
-  effectIcon: { fontSize: 16, lineHeight: 1 },
-  effectTitle: { display: 'block', color: '#d6eed8', fontSize: 10, marginBottom: 2 },
-  effectText: { margin: 0, color: '#a8c0ad', fontSize: 10, lineHeight: 1.35 },
-};

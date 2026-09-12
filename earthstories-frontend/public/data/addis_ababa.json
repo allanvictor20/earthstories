@@ -157,5 +157,36 @@
       "2022": null
     }
   },
-  "events": []
+  "events": [
+    {
+      "year": 2017,
+      "type": "flood",
+      "description": "Surface water rose sharply (+1.4 km\u00b2)"
+    },
+    {
+      "year": 2018,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.1 percentage points)"
+    },
+    {
+      "year": 2020,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.1 percentage points)"
+    },
+    {
+      "year": 2021,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.1 percentage points)"
+    },
+    {
+      "year": 2022,
+      "type": "urban_growth",
+      "description": "Rapid growth in built-up land (+0.1 percentage points)"
+    },
+    {
+      "year": 2023,
+      "type": "greening",
+      "description": "Vegetation rose above its recent average (+0.051 NDVI)"
+    }
+  ]
 }

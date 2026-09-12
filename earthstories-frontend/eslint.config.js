@@ -18,4 +18,10 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Server-side: the serverless handler, the vite config and the test files
+    // run in Node, not the browser.
+    files: ['vite.config.js', 'api/**/*.js', '**/__tests__/**/*.js'],
+    languageOptions: { globals: { ...globals.node } },
+  },
 ])

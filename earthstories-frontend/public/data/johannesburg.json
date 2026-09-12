@@ -161,17 +161,22 @@
     {
       "year": 2003,
       "type": "heat",
-      "description": "Unusually hot year (+1.9\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.9\u00b0C against the local baseline)"
+    },
+    {
+      "year": 2007,
+      "type": "drought",
+      "description": "Marked surface water loss (-0.7 km\u00b2)"
     },
     {
       "year": 2015,
       "type": "heat",
-      "description": "Unusually hot year (+1.9\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.9\u00b0C against the local baseline)"
     },
     {
       "year": 2019,
       "type": "heat",
-      "description": "Unusually hot year (+1.5\u00b0C above baseline)"
+      "description": "Unusually hot year (+1.5\u00b0C against the local baseline)"
     }
   ]
 }

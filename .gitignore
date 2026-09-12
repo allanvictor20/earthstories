@@ -18,3 +18,15 @@ Thumbs.db
 
 # Vite build output
 earthstories-frontend/dist/
+# Local env files (any location)
+.env
+.env.local
+*.local
+
+# Test/coverage output
+coverage/
+.pytest_cache/
+
+# Deploy metadata
+.vercel
+.netlify

@@ -1,12 +1,15 @@
 import { useState, useCallback } from 'react';
 
+// Chapter identity only. Year offsets and chart types live in StoryEngine.jsx,
+// which is the single source of truth for both — they used to be duplicated
+// here with conflicting values.
 export const CHAPTERS = [
-  { id: 1, title: 'The World You Were Born Into',      chartType: 'none',    year_offset: 0  },
-  { id: 2, title: 'Growing Up Together',               chartType: 'none',    year_offset: 5  },
-  { id: 3, title: 'The Hidden Changes',                chartType: 'ndvi',    year_offset: 10 },
-  { id: 4, title: 'Events That Shaped Your Home',      chartType: 'events',  year_offset: 15 },
-  { id: 5, title: 'Your Story So Far',                  chartType: 'summary', year_offset: 0  },
-  { id: 6, title: 'Your Next Chapter',                  chartType: 'forecast', year_offset: 0  },
+  { id: 1, title: 'The World You Were Born Into' },
+  { id: 2, title: 'Growing Up Together' },
+  { id: 3, title: 'The Hidden Changes' },
+  { id: 4, title: 'Events That Shaped Your Home' },
+  { id: 5, title: 'Your Story So Far' },
+  { id: 6, title: 'Your Next Chapter' },
 ];
 
 export function useChapterState(birthYear) {
@@ -14,17 +17,15 @@ export function useChapterState(birthYear) {
     activeChapter: 1,
     activeYear: birthYear,
     chartType: 'none',
-    photoVisible: true,
   });
 
   const onStepEnter = useCallback(({ element }) => {
-    const chapter = parseInt(element.dataset.chapter);
-    const year    = parseInt(element.dataset.year || birthYear);
+    const chapter = Number.parseInt(element.dataset.chapter, 10);
+    const year = Number.parseInt(element.dataset.year, 10);
     setState({
-      activeChapter: chapter,
-      activeYear:    year,
-      chartType:     element.dataset.chart || 'none',
-      photoVisible:  chapter === 1,
+      activeChapter: Number.isFinite(chapter) ? chapter : 1,
+      activeYear: Number.isFinite(year) ? year : birthYear,
+      chartType: element.dataset.chart || 'none',
     });
   }, [birthYear]);
 
