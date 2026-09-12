@@ -32,6 +32,7 @@ earthstories/
 │       │   ├── StoryEngine.jsx    # Scroll-driven chapter renderer
 │       │   ├── DataVizPanel.jsx   # NDVI, temperature, events, summary charts
 │       │   ├── ForecastPanel.jsx  # Trend projection to age 50
+│       │   ├── ChapterImage.jsx   # Ground-level illustration per chapter
 │       │   ├── ShareButton.jsx    # PNG card download
 │       │   ├── VoiceToggle.jsx    # Voice narration toggle
 │       │   └── ErrorBoundary.jsx  # Keeps one bad render from blanking the page
@@ -40,6 +41,7 @@ earthstories/
 │       │   └── useVoiceNarration.js # Web Speech API
 │       ├── services/
 │       │   ├── narration.js       # AI narration engine (via the proxy)
+│       │   ├── illustration.js    # Data-driven scene prompts + image URLs
 │       │   └── climateForecast.js # Least-squares projection + NASA POWER
 │       └── utils/
 │           ├── metrics.js         # Shared metric-series helpers
@@ -170,6 +172,31 @@ automatically from that root.
 - **JRC/GSW1_4/YearlyHistory** — Surface Water History
 - **NASA GIBS WMTS** — Satellite tile imagery
 - **NASA POWER** — Live temperature/precipitation reference in the forecast panel
+
+---
+
+## 🖼 Chapter illustrations
+
+Each chapter carries a ground-level illustration of the reader's own city,
+generated from that city's measurements — the street, the trees, the roofs — so
+that a change in the data is something you can see rather than a number you have
+to interpret. The scene prompt is built from the **metrics**, not from the
+narrator's prose, so the picture tracks the record: the street gets more
+built-up and less green exactly as the satellites measured.
+
+- **Provider:** [Pollinations.ai](https://github.com/pollinations/pollinations)
+  — open source, no API key, no signup. It runs FLUX behind a plain URL.
+- **Swapping providers:** everything lives in `src/services/illustration.js`.
+  Only `buildImageUrl()` needs to change to move to, say, a Cloudflare Workers
+  AI function (`@cf/black-forest-labs/flux-1-schnell`, 10k free Neurons/day).
+- **Deterministic:** the seed is derived from city + birth year + chapter, so a
+  given Earth Story always produces the same pictures.
+- **Metered connections:** much of the intended audience pays for mobile data by
+  the megabyte, so images are 768×512, lazily loaded, and offered behind a tap
+  when the browser reports `saveData` or a 2G/3G connection.
+- **Always labelled:** every illustration is captioned as a picture drawn from
+  the measurements, not a photograph of that street. The satellite imagery on
+  the map beside the story is the real NASA record; these are not.
 
 ---
 

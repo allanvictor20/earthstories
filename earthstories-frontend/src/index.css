@@ -445,3 +445,53 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ─── Chapter illustration ─── */
+.chapter-image {
+  margin: 18px 0 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--green-050);
+  border: 1px solid var(--line-green);
+}
+.chapter-image__img {
+  width: 100%;
+  height: auto;
+  display: block;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+.chapter-image__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  aspect-ratio: 3 / 2;
+  color: var(--ink-400);
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
+  padding: 0 1rem;
+}
+.chapter-image__caption {
+  padding: 8px 10px;
+  color: var(--ink-400);
+  font-size: 11px;
+  line-height: 1.45;
+  font-style: italic;
+}
+.chapter-image--deferred { padding: 14px 10px; text-align: center; }
+.chapter-image__load {
+  border: 1px solid var(--green-600);
+  background: #fff;
+  color: var(--green-600);
+  border-radius: var(--radius-pill);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.chapter-image__load:hover { background: var(--green-600); color: #fff; }
+.chapter-image--deferred .chapter-image__caption { padding: 8px 0 0; }

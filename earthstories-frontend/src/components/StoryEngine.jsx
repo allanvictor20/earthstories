@@ -8,6 +8,7 @@ import DataVizPanel from './DataVizPanel';
 import ForecastPanel from './ForecastPanel';
 import VoiceToggle from './VoiceToggle';
 import ShareButton from './ShareButton';
+import ChapterImage from './ChapterImage';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -94,6 +95,14 @@ export default function StoryEngine({ cityData, birthYear, narrations }) {
                     <span>Writing your story…</span>
                   </div>
                 )}
+
+                {/* The data at human height: the street, not the satellite. */}
+                <ChapterImage
+                  cityData={cityData}
+                  birthYear={birthYear}
+                  chapter={chapter.id}
+                  year={year}
+                />
 
                 <ChapterEvidence
                   cityData={cityData}
